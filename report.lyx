@@ -1,0 +1,558 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\begin_preamble
+\usepackage{hyphenat}
+\renewcommand{\abstractname}{Abstract}
+\end_preamble
+\use_default_options false
+\maintain_unincluded_children false
+\language british
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 0
+\use_mathdots 1
+\cite_engine natbib_authoryear
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language swedish
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Sudoku Solver
+\end_layout
+
+\begin_layout Author
+Emil Vikström
+\end_layout
+
+\begin_layout Abstract
+A backtracking solver for sudoku-like puzzles was implemented in Haskell,
+ together with a web GUI and compiled to JavaScript with the Haste compiler.
+\end_layout
+
+\begin_layout Section
+License
+\end_layout
+
+\begin_layout Standard
+The software is released under the GNU Public License version 3
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://www.gnu.org/licenses/gpl-3.0.html
+\end_layout
+
+\end_inset
+
+, as required by the license of the Haste compiler.
+\end_layout
+
+\begin_layout Standard
+This document is released under the GNU Free Document License version 1.2
+ or later (your choice), as requried by most figures.
+\end_layout
+
+\begin_layout Standard
+Contact me at rsemil@gmail.com or http://www.emilvikstrom.se/ for source code
+ requests.
+\end_layout
+
+\begin_layout Section
+Sudoku rules
+\end_layout
+
+\begin_layout Standard
+Sudoku is a number game.
+ Each row, column and region in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Sudoku"
+
+\end_inset
+
+
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Stellmach & King, Wikipedia 2009, http://en.wikipedia.org/wiki/File:Sudoku-by-L2G-
+20050714.svg
+\end_layout
+
+\end_inset
+
+ should be filled with the numbers 1 to 9, which means that each row/column/regi
+on may only contain each number one time.
+ A well-designed sudoku does only have one solution.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figure1.svg
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Sudoku"
+
+\end_inset
+
+Sudoku
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+How it Works
+\end_layout
+
+\begin_layout Subsection
+Algorithm
+\end_layout
+
+\begin_layout Standard
+A backtracking algorithm is used.
+ The general backtracking algorithm can be understood as building a tree
+ of all possible solution to each subproblem, and then cut away those subtress
+ that are not going to produce valid solutions to the main problem.
+ This can be implemented in a functional language with a recursion where
+ you optimistically try one of multiple possible solutions to each subproblem,
+ until you either find a complete solution or find yourself stuck with a
+ non-solvable problem.
+ If you get to the 
+\begin_inset Quotes sld
+\end_inset
+
+stuck
+\begin_inset Quotes srd
+\end_inset
+
+ phase you go back (backtrack) and try a different solution to each subproblem.
+ It is a depth-first approach where you optimistically pick a solution and
+ go back only if it fails.
+\end_layout
+
+\begin_layout Standard
+This is implemented in the sudoku solver as a recursion where at every step
+ each possible value is tried for a cell and if a solution is found returns
+ the complete solution.
+\end_layout
+
+\begin_layout Standard
+The current algorithm is naïve and tries each field in order.
+ Great speedups could probably be had by doing some smart picking of the
+ subproblem (cell) to solve but that is not investigated at this time.
+\end_layout
+
+\begin_layout Subsection
+Definitions
+\end_layout
+
+\begin_layout Standard
+These are the definitions I use in this project and in my solver.
+\end_layout
+
+\begin_layout Description
+Value An integer
+\end_layout
+
+\begin_layout Description
+Cell A single cell.
+ The cell may have a single known value, or a set of possible values.
+\end_layout
+
+\begin_layout Description
+Area A set of cells, a 
+\begin_inset Quotes sld
+\end_inset
+
+constraint area
+\begin_inset Quotes srd
+\end_inset
+
+.
+ Each known cell must have a unique value in the area.
+ A cell may be included in multiple areas.
+\end_layout
+
+\begin_layout Description
+Row/Column Rows, columns and regions from the original sudoku definition
+ are represented as areas.
+\end_layout
+
+\begin_layout Description
+Done The puzzle is solved when all cells have known values.
+\end_layout
+
+\begin_layout Subsection
+The General Solution
+\end_layout
+
+\begin_layout Standard
+Each cell is member of a set of areas.
+ Each area must have only unique values.
+ This allows for a general solution where each row is an area, each column
+ is an area and each region is an area.
+\end_layout
+
+\begin_layout Standard
+Solving a subproblem (setting the value for a cell) means picking a value
+ that is not already chosen by another cell in any of the areas the cell
+ is part of.
+ We know we are stuck (need backtracking) if there is no possible value
+ to pick.
+\end_layout
+
+\begin_layout Standard
+This general solution is easy to extend to similar puzzles.
+ At this time the solver is able to solve 4x4, 9x9 and 16x16 sudoku puzzles
+ with the included templates, but it is possible to add more templates without
+ changing the solving engine (GUI code needs to be added as well if the
+ web interface is to be used).
+ Here are some other variants variants that is possible to solve by just
+ adding more templates:
+\end_layout
+
+\begin_layout Itemize
+Samurai (figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Samurai"
+
+\end_inset
+
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Nonenmac, Wikipedia 2008, http://en.wikipedia.org/wiki/File:A_nonomino_sudoku.svg
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Itemize
+Sudoku with irregular regions
+\end_layout
+
+\begin_layout Itemize
+Non-symmetric puzzles (for example with 3x2 regions)
+\end_layout
+
+\begin_layout Itemize
+A puzzle where some cells can contain only a subset of the possible numbers
+ (3, 4, 5 for example)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename samurai.png
+	width 10cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Samurai"
+
+\end_inset
+
+Samurai
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Implementation
+\end_layout
+
+\begin_layout Standard
+I choose to implement this using 
+\emph on
+Data.Array
+\emph default
+ for to keep track of all areas in a puzzle.
+ The datatype was choosen for fast, ɵ(1) lookup of values.
+ Cells are then part in areas only by the area index (which is also the
+ index in the array).
+ 
+\emph on
+Data.Array
+\emph default
+ is immutable so it won't break referential transparency.
+\end_layout
+
+\begin_layout Standard
+Each area is represented using only a list of known values in the area.
+ That way not all cells must be traversed to check if a value is set in
+ the area (a bit array may give even better performance).
+\end_layout
+
+\begin_layout Standard
+A puzzle is a list of cells.
+ Each cell contains information about (possible) value(s) and area indices.
+ This list is compiled into the initial area array.
+\end_layout
+
+\begin_layout Standard
+The backend (solver) and frontend (web UI) is separated into two modules,
+ Solver and Main.
+ Solver may be independently used in other projects for solving sudoku-like
+ puzzles.
+\end_layout
+
+\begin_layout Standard
+Main makes heavy use of the Haste library, included with the Haste compiler.
+ The library contains functionality to manipulate the HTML DOM tree (adding
+ and removing elements) as well as listening for events from the GUI.
+ Everything is contained in the IO monad.
+\end_layout
+
+\begin_layout Section
+Performance
+\end_layout
+
+\begin_layout Standard
+The recursion step will theoretically try all possible values except when
+ it encounters something that breaks the invariant for an area.
+ This is in the end a brute-force approach which may take a very long time
+ in the worst case.
+ In the worst case a lot of values will be tried before reaching a backtracking
+ point.
+ Large subtress may then need to be thrown away in which case the calculations
+ leading up to that point was wasted.
+\end_layout
+
+\begin_layout Standard
+My non-scentific tests of some sudokus show that the general performance
+ is very good, though, with solution times under a second for many puzzles
+ designed to be hard, extreme or worse for humans.
+ But some problem-puzzles exists.
+ An extreme example can be seen in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Sudoku-puzzle-hard"
+
+\end_inset
+
+
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Lithiumflash, Wikipedia 2007, http://en.wikipedia.org/wiki/File:Sudoku_puzzle_hard
+_for_brute_force.jpg
+\end_layout
+
+\end_inset
+
+ which was specifically designed to be hard to solve by brute force.
+ That puzzle took a few hours to solve on my machine, in Opera 12.
+\end_layout
+
+\begin_layout Standard
+Performance may vary between different browsers, of course.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename bt.jpg
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Sudoku-puzzle-hard"
+
+\end_inset
+
+Sudoku puzzle hard to brute force
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+What I Learned
+\end_layout
+
+\begin_layout Standard
+The backtracking algorithm was very easy to implement.
+ It is a straightforward divide-and-conquer algorithm.
+ I am pretty happy with the general approach, though.
+ I will definitely work some more on this to at least get Samurai sudokus
+ working.
+\end_layout
+
+\begin_layout Standard
+The hard part was the GUI.
+ Haste had some quirks to get going (as most smaller projects), but the
+ overall quality of Haste was very good; it compiles to small and fast code.
+ But the hardest part was using monads.
+ I have read about monads and understands the theoretic foundations of it,
+ but using it requires some practice.
+ I ended up with a lot of type errors at first, but after I while I started
+ to get a hang of it.
+\end_layout
+
+\begin_layout Section
+Usage
+\end_layout
+
+\begin_layout Standard
+You need the Haste compiler
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Anton Ekblad 2012, https://github.com/valderman/haste-compiler
+\end_layout
+
+\end_inset
+
+ to compile this to JavaScript.
+ An already-compiled version of 
+\emph on
+Main.js
+\emph default
+ is included in the distribution if you just want to try it out.
+ Open 
+\emph on
+index.html
+\emph default
+ in a web browser with script support.
+\end_layout
+
+\begin_layout Standard
+If you have Haste, run 
+\emph on
+make Main.js
+\emph default
+ to compile your JavaScript file.
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+Solver.hs
+\emph default
+ may be independently used as a module for your own projects.
+ It is tried with the Glasgow Haskell Compiler.
+ Haddock dokumentation can be generated by 
+\emph on
+make doc
+\end_layout
+
+\end_body
+\end_document

@@ -1,0 +1,27 @@
+<!-- Emil Vikström 2013. GPL version 3 -->
+<html>
+  <head>
+    <title>Online Haskell Sudoku Solver</title>
+    <script src="Main.js"></script>
+    <style>
+      .cell input { width: 1.7em; height: 1.7em; text-align: center; font-size: large; border: 1px solid gray;}
+      .r { border-right: 5px solid black; }
+      .d { border-bottom: 5px solid black; }
+      #puzzle { border-spacing:0; border-collapse:collapse;}
+    </style>
+  </head>
+  <body>
+    <h1>Online Haskell Sudoku Solver</h1>
+    <p>This solver is written in Haskell, compiled with Haste and now finally usable by you, dear reader.</p>
+
+    <form onsubmit="return false;">
+      <select id="selector">
+	<option selected="selected">Pick one</option>
+      </select>
+      
+      <table id="puzzle"></table>
+      <div id="controls"></div>
+    </form>
+    <p>Licensed with <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL version 3</a>, post source code requests to rsemil@gmail.com</p>
+  </body>
+</html>
